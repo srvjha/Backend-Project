@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from '../utils/ApiError.js'
 import {User} from "../models/user.model.js"
-import {uploadOnCloudnary} from '../utils/cloudnary.js'
+import {uploadOnCloudnary,deleteOnCloudnary} from '../utils/cloudnary.js'
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from  'jsonwebtoken'
 
@@ -167,7 +167,7 @@ const loginUser = asyncHandler(async(req,res)=>{
 
 const logoutUser = asyncHandler(async(req,res)=>{
           await User.findByIdAndUpdate(
-            req.user._id,
+            req.user?._id,
             {
                $set: {
                   refreshToken:undefined
@@ -266,10 +266,13 @@ const changeUserPassword = asyncHandler(async(req,res)=>{
 })
 
 const getCurrentUser = asyncHandler(async(req,res)=>{
-   const user  = await User.find(req.user)
-
-   // console.log("USER :",user)
-   // console.log("REQUESTED BODY :",req.user)
+   // const user  =  User.find(req.user)
+   // if(!user)
+   // {
+   //    throw new ApiError(400,"Error While Fetching Data!!")
+   // }
+   //  console.log("USER :",user)
+   //  console.log("REQUESTED BODY :",req.user)
    // console.log("REQUESTED BODY ID :",req.user?._id)
    return res
    .status(200)
@@ -329,10 +332,18 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
       new:true
     }
  ).select("-password")
+  
+ const oldImageDelete  = await deleteOnCloudnary(avatarLocalPath)
 
+   // const options = {
+   //    httpOnly:true,
+   //    secure:true
+   // }
+ 
  return res
  .status(200)
  .json(new ApiResponse(200,userAvatar,"Avatar File Successfully Updated."))
+ .json(new ApiResponse(200,oldImageDelete,"Old Avatar Successfully Deleted."))
 })
 
 const updateUserCoverImage = asyncHandler(async(req,res)=>{
