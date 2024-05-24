@@ -26,14 +26,15 @@ const uploadOnCloudnary = async(localFilePath)=>{
     }
 }
 
-const deleteOnCloudnary  = async(localFilePath)=>{
+const deleteOnCloudnary  = async(localFileURL)=>{
+    const public_id = localFileURL.slice(localFileURL.lastIndexOf("/") + 1, localFileURL.lastIndexOf(".png"));
+   
     try {
-        if(!localFilePath) return null
+        if(!public_id) return null
         // delete file 
-        const response  = await cloudinary.uploader.destroy(localFilePath,{
-            resource_type:"auto"
-        })
-        console.log("File is Successfully Deleted",response.url)
+        console.log("Public ID:",public_id)
+        const response  = await cloudinary.uploader.destroy(public_id)
+        console.log("File is Successfully Deleted",response)
         return response
         
     } catch (error) {
