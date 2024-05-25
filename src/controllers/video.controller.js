@@ -4,12 +4,14 @@ import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudnary} from "../utils/cloudnary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+    let{ page, limit , query, sortBy, sortType, userId } = req.query
+    // const {userId} = req.query
     //TODO: get all videos based on query, sort, pagination
+
      // Ensure page and limit are numbers
      page = parseInt(page, 10);
      limit = parseInt(limit, 10);
@@ -18,20 +20,28 @@ const getAllVideos = asyncHandler(async (req, res) => {
             throw new ApiError(400,"User ID Not Found")
         }
 
+         //Validate query parameters
+    if (!['asc', 'desc'].includes(sortType)) {
+        throw new ApiError(400, "Invalid sortType, should be 'asc' or 'desc'");
+    }
+
         // Query FIltering
-    const match = { userId: mongoose.Types.ObjectId(userId) };
+    const match = { owner: new mongoose.Types.ObjectId(userId) };
+    console.log("match: ",match.userId)
+   
     if (query) {
         match.$or = [
             { title: { $regex: query, $options: 'i' } },
             { description: { $regex: query, $options: 'i' } }
         ];
     }
+   
+
+    
+
     const videos = await Video.aggregate([
         {
-            $match:{
-               
-                userId:new mongoose.Types.ObjectId.createFromBase64(userId)
-            }
+            $match:match
         },
        
         {
@@ -52,7 +62,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     // Total count for pagination
     const totalVideos = await Video.countDocuments(match);
     res.status(200).json(
-        new ApiResponse(200, { videos, totalVideos, page, limit }, "Videos fetched successfully")
+        new ApiResponse(200, { videos,totalVideos,page,limit }, "Videos fetched successfully")
     );
 
 
@@ -61,14 +71,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description} = req.body
     // TODO: get video, upload to cloudinary, create video
+
     const videoFileLocalPath = req.files?.videoFile[0].path
     const thumbnailLocalPath = req.files?.thumbnail[0].path
     if(!videoFileLocalPath && !thumbnailLocalPath)
         {
             throw new ApiError(400,"VideoFile & Thumbnail is Required!")
         }
-    const videoFile = await uploadOnCloudinary(videoFileLocalPath)
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+    const videoFile = await uploadOnCloudnary(videoFileLocalPath)
+    const thumbnail = await uploadOnCloudnary(thumbnailLocalPath)
     if(!videoFile ||!thumbnail)
         {
             throw new ApiError(400,"VideoFile & Thumbnail Not Uploaded!")
@@ -76,9 +87,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const video = await Video.create({
         title,
         description,
-        videoFile,
-        thumbnail,
-        duration: videoFile.duration,
+        videoFile:videoFile?.url,
+        thumbnail:thumbnail?.url,
+        duration: videoFile?.duration,
         views: 0,
         isPublished: true,
         owner: req.user._id
@@ -96,6 +107,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: get video by id
+    const video = await Video.findById(videoId).select("videoFile")
+    if(!video)
+        {
+            throw new ApiError(400,"No Video Found")
+        }
+    res.status(200).json(
+        new ApiResponse(201,{video},"Video Fetched Successfully")
+    )
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
