@@ -399,7 +399,8 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
 
 const getUserChannelProfile = asyncHandler(async(req,res)=>{
     const{username} = req.params
-    console.log("Username: ",username)
+    //console.log("req:",req.user)
+    //console.log("Username: ",username)
     if(!username?.trim())
     {
         throw new ApiError(400,"Username is Missing!!")
@@ -412,7 +413,7 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
          },
          {
             $lookup:{
-               from:"subscriptions",
+               from:"subscriptions", // Subscription model mein naam change ho jata hai
                localField:"_id",
                foreignField:"channel",
                as:"subscribers"
@@ -436,7 +437,8 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
                },
                isSubscibed:{
                   $cond:{
-                     if:{$in:[req.user?._id,"$subscribers.subscribers"]},
+                     if:{$in:[req.user?._id,"$subscribers.subscriber"]},
+                    
                      then:true,
                      else:false
                   }
@@ -463,7 +465,7 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
       {
          throw new ApiError(400,"Channel Doesn't Exist.")
       }
-      console.log("Channel:",channel)
+      //console.log("Channel:",channel)
       return res
       .status(200)
       .json(new ApiResponse(200,channel[0],"User channel Fetched Successfully!"))

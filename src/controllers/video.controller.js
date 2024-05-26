@@ -61,12 +61,21 @@ const getAllVideos = asyncHandler(async (req, res) => {
         },
         
     ])
-
-    // Total count for pagination
+    console.log("Videos: ",videos.length)
+    if(videos.length<1)
+        {
+            throw new ApiError(400,"Videos Not Found")
+        }
+    else
+    {
+         // Total count for pagination
     const totalVideos = await Video.countDocuments(match);
     res.status(200).json(
         new ApiResponse(200, { videos,totalVideos,newPage,newLimit }, "Videos fetched successfully")
     );
+    }
+
+   
 
 
 })
@@ -95,7 +104,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         duration: videoFile?.duration,
         views: 0,
         isPublished: true,
-        owner: req.user._id
+        owner: req.user?._id
     })
 
     if(!video)
@@ -147,8 +156,12 @@ const updateVideo = asyncHandler(async (req, res) => {
             description,
             thumbnail:thumbnail?.url,
                        
-        }
-     }
+        },
+        
+     },
+     {
+        new:true // idhr yeh operator isliye use kr rhe kyuki jb video json me bheje toh update wala jaye
+    }
     )
     deleteOnCloudnary(oldThumbnail)
     
@@ -169,7 +182,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
     const videoFile = videoDetails.videoFile
     console.log("VideoFile: ",videoFile)
      try {
-        await deleteVideoOnCloudnary(videoFile);
+        await deleteVideoOnCloudnary(videoFile); // delete on cloudinary
+        await Video.findByIdAndDelete(videoId);  // delete on db
     } catch (error) {
         console.error("Error deleting video file from Cloudinary:", error);
         throw new ApiError(500, "Error deleting video file from Cloudinary");
@@ -180,6 +194,42 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+    //TODO: toggle publish status
+    const videoDetails = await Video.findById(videoId)
+    if (!videoDetails) {
+        throw new ApiError(404, "Video not found");
+
+    }
+    // console.log("1st Here")
+
+    const statusOfPublish = videoDetails.isPublished // true || false
+    const toggleStatus = !statusOfPublish
+    // console.log("Status: ",toggleStatus)
+    // console.log("2nd Here")
+   
+
+    const video  = await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                isPublished: toggleStatus
+            }
+        },
+        {
+            new: true
+        }
+    )
+    // console.log("3rd Here")
+    if(!video)
+        {
+            throw new ApiError(400,"No Video Found")
+        }
+        // console.log("4th Here")
+        //console.log("Video: ",video)
+
+    res.status(200).json(new ApiResponse(200,{video},"toggle status updated"))
+    // console.log("5th Here")
+
 })
 
 export {

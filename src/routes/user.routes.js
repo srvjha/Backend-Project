@@ -42,7 +42,7 @@ router.route("/currentuser").post(verifyJWT,getCurrentUser)
 router.route("/update-account-details").patch(updateAccountDetails)
 router.route("/update-avatar").post(verifyJWT,upload.single('avatar'),updateUserAvatar)
 router.route("/update-coverimage").post(verifyJWT,upload.single('coverImage'),updateUserCoverImage)
-router.route("/get-user-channel-profile/:username").get(getUserChannelProfile)
+router.route("/get-user-channel-profile/:username").get(verifyJWT,getUserChannelProfile)
 router.route("/history").get(verifyJWT,getWatchHistory)
 
 
