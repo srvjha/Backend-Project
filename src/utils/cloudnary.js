@@ -42,10 +42,29 @@ const deleteOnCloudnary  = async(localFileURL)=>{
     }
 }
 
+const deleteVideoOnCloudnary  = async(localFileURL)=>{
+    const public_id = localFileURL.slice(localFileURL.lastIndexOf("/") + 1, localFileURL.lastIndexOf(".webm"));
+    
+    try {
+        if(!public_id) return null
+        // delete file 
+        console.log("Public ID:",public_id)
+        const response = await cloudinary.uploader.destroy(public_id,{
+            resource_type:"video"
+            
+        })
+        console.log("File is Successfully Deleted",response)
+        return response
+        
+    } catch (error) {
+        throw new ApiError(400,"File not Deleted.")
+    }
+}
+
 
 
 // cloudinary.uploader.upload("https://upload.wikimedia.org/wikipedia/commons/a/ae/Olympic_flag.jpg",
 //   { public_id: "olympic_flag" }, 
 //   function(error, result) {console.log(result); });
 
-export {uploadOnCloudnary,deleteOnCloudnary}
+export {uploadOnCloudnary,deleteOnCloudnary,deleteVideoOnCloudnary}
