@@ -102,6 +102,55 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { channelId } = req.params
+    // const channel = await Subscription.find({
+    //     subscriber: channelId
+    // })
+
+
+   // console.log("Channel: ",channel)
+
+    const channel = await Subscription.aggregate([
+        {
+            $match:{
+                subscriber: new mongoose.Types.ObjectId(channelId)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"channel",
+                foreignField:"_id",
+                as:"channels"
+            }
+        },
+        {
+            $group:{
+                _id:"$subscriber",
+                channels:{
+                    $push:"$channels"
+                },
+                totalChannelCount:{
+                    $sum:1
+                }
+            }
+        },
+        {
+            $project:{
+                _id:0,
+                totalChannelCount:1,
+                "channels.username":1,
+                "channels.avatar":1
+            }
+        }
+
+    ])
+
+    console.log("Channel Details: ",channel[0])
+    if (!channel.length) {
+        throw new ApiError(400, "Channel Doesn't Exist.");
+    }
+
+    return res.status(200).json(new ApiResponse(200, channel[0], "Subscribed Channel details fetched successfully!"));
 })
 
 export {
