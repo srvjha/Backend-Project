@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 const generateAccessAndRefreshTokens = async(userId)=>{
    try {
      const user =  await User.findById(userId)
-     console.log("User: ",user)
+     //console.log("User: ",user)
 
     const accessToken = user.generateAccessToken()
     const refreshToken =  user.generateRefreshToken()
@@ -119,10 +119,10 @@ const loginUser = asyncHandler(async(req,res)=>{
       // 6. send cookie
 
       const {email,username,password} = req.body;
-      console.log("email :",email)
-      console.log("Requested Data Login: ",req.body)
-      console.log("Request Files: ",req.files)
-      console.log("Request File: ",req.file)
+      // console.log("email :",email)
+      // console.log("Requested Data Login: ",req.body)
+      // console.log("Request Files: ",req.files)
+      // console.log("Request File: ",req.file)
 
       if(!username && !email) // ALternative to this----> if(!(username || email))
       {
@@ -155,6 +155,7 @@ const loginUser = asyncHandler(async(req,res)=>{
          httpOnly:true,
          secure:true
       }
+      console.log("Login Successfully!")
 
       return res
       .status(200)
